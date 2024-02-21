@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  spark-master:
+    user: root
+    image: bitnami/spark:latest
+    ports:
+      - "8080:8080" # Porta da UI do Spark Master
+      - "7077:7077" # Porta de comunicação do Spark Master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes: 
+      - ./data:/opt/bitnami/spark/work/data:rw
+    networks:
+      - spark-network
+    
+
+  spark-worker:
+    user: root
+    image: bitnami/spark:latest
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=1g
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    depends_on:
+      - spark-master
+    volumes: 
+      - ./data:/opt/bitnami/spark/work/data:rw
+    networks:
+      - spark-network  
+
+  mssql:
+    user: root
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      SA_PASSWORD: "Xisuto@123456"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - ./_mssql_data:/var/opt/mssql
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge

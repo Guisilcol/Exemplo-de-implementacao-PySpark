@@ -1,0 +1,4 @@
+/.env
+/poetry.lock
+/_mssql_data
+/project_samples
