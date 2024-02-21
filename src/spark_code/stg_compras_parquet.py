@@ -101,10 +101,9 @@ def compute_compras_stg(spark: SparkSession):
     df_invalids_cnpj = df_invalids_cnpj.withColumn('inconsistency', F.lit('invalid CNPJ'))
     
     # Remove the duplicates AND create a Dataframe with duplicated rows
-    columns_without_index = df.columns
     df_duplicated = (
         df
-        .groupBy(columns_without_index)
+        .groupBy(DF.columns)
         .count()
         .where(F.col('count') > 1)
         .drop('count')
