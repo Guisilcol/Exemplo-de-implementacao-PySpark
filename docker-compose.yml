@@ -5,7 +5,7 @@ services:
     user: root
     image: mcr.microsoft.com/mssql/server:2019-latest
     environment:
-      SA_PASSWORD: "Xisuto@123456"
+      SA_PASSWORD: ${DB_PASSWORD}
       ACCEPT_EULA: "Y"
     ports:
       - "1433:1433"
@@ -24,7 +24,7 @@ services:
     networks:
       - spark-network
     volumes:
-      - ./data/:/bitnami/spark
+      - ${BASE_PATH}:/bitnami/spark
 
   spark-worker:
     image: bitnami/spark:3
@@ -41,7 +41,7 @@ services:
     networks:
       - spark-network
     volumes:
-      - ./data/:/bitnami/spark
+      - ${BASE_PATH}:/bitnami/spark
       
 networks:
   spark-network:

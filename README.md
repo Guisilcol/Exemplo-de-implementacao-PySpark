@@ -1,19 +1,23 @@
-# TCS-Exemplo-de-implementacao-PySpark
-
-## Descrição
-
-Este repositório contém um exemplo de implementação de um pipeline de dados utilizando as ferramentas Spark, Python e Docker. 
+# Implementação de Pipeline de Dados com PySpark
+## Descrição do Projeto
+Este repositório é dedicado à demonstração da construção de um pipeline de dados utilizando as tecnologias Spark, Python e Docker.
 
 ## Pré-requisitos
+Para seguir este guia, é necessário ter instalado em seu ambiente:
 
-- Docker
-- Docker Compose
-- Python 3.10.12
-- Recomendado: Poetry
+    - Docker
+    - Docker Compose
+    - Python 3.10.12
+    - Poetry (opcional, mas recomendado)
 
-## Utilização 
+## Instruções de Uso
 
-Configure as variáveis de ambiente no arquivo .env de acordo com o arquivo .env.example e configure os volumes e variaveis de ambiente no arquivo docker-compose.yml de acordo com suas alterações no .env. Recomendo utilizar diretórios absolutos nos valores das variáveis de ambiente do arquivo .env e docker-compose.yml.
-Suba o serviço do Spark e MSSQL usando o comando 'docker-compose up' na raiz do projeto. 
-Se conecte no banco de dados e execute o script de criação de tabelas localizado na pasta "db/create_tables.sql".
-Uma vez que o serviço do Spark estiver rodando e o arquivo .env configurado, pode executar os scripts da pasta "src".
+- Configuração Inicial: Comece pela configuração das variáveis de ambiente. Isso é feito no arquivo .env, baseando-se no modelo fornecido pelo arquivo .env.example. É importante destacar que o docker-compose.yml já está preparado para utilizar as variáveis de ambiente definidas no arquivo .env, eliminando a necessidade de ajustes adicionais neste arquivo.
+
+- Inicialização dos Serviços: Com as variáveis de ambiente devidamente configuradas no arquivo .env, inicie os serviços necessários, incluindo o Spark e o MSSQL, executando o comando docker-compose up no terminal, diretamente na pasta raiz do projeto.
+
+- Criação de Tabelas: Após a inicialização dos serviços, acesse o banco de dados e execute o script disponível em "db/create_tables.sql" para criar as tabelas necessárias para o funcionamento do pipeline.
+
+- Execução de Scripts: Com os serviços rodando e o arquivo .env configurado, você está pronto para executar os scripts localizados na pasta "src". A execução pode ser realizada por meio do Jupyter Notebook, utilizando o VSCode para uma experiência integrada.
+
+Seguindo estas instruções, você estará apto a configurar e operar o pipeline de dados proposto.
