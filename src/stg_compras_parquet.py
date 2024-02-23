@@ -5,31 +5,43 @@ import logging
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
-
 from validate_docbr import CNPJ
 
+from internal.pyspark_helper import get_jdbc_options, get_pre_configured_spark_session_builder
+
 #%% Initialize the SparkSession
-SPARK = SparkSession.builder.appName("Load Staging Data").getOrCreate()
+SPARK = get_pre_configured_spark_session_builder() \
+    .appName("Load Staging Data") \
+    .getOrCreate()
 
 logging.basicConfig()
 LOGGER = logging.getLogger("pyspark")
 LOGGER.setLevel(logging.INFO)
 
-#%% Load the function to compute the stage data for the table 'compras'
-def compute_compras_stg(spark: SparkSession):
+#%% Load the function to compute dataframes
+def compute_cep(spark: SparkSession):
+    """Compute the dataframe for the fornecedores table."""
+    TABLE_NAME = 'CEP'
+    return spark.read \
+        .format("jdbc") \
+        .options(**get_jdbc_options()) \
+        .option("dbtable", TABLE_NAME) \
+        .load()
+        
+def compute_compras_stg(spark: SparkSession, df_ceps: DataFrame):
     """Compute the stage data for the table 'compras' and return a DataFrame with the stage data and a rejected DataFrame with the rejected data and the inconsistency type."""
+    COMPRAS_FILEPATH = f'{env("SOURCE_PATH")}/compras.csv'
     
     def subtract_by_index(df: DataFrame, df_to_subtract: DataFrame) -> DataFrame:
         """Subtract the rows of a DataFrame by the index column."""
         return df.join(df_to_subtract, df['index'] == df_to_subtract['index'], 'left_anti').select(df.columns)
     
-    filepath = f'{env("SOURCE_PATH")}/compras.csv'
-    
-    DF = spark.read.csv(filepath, header=True)
+    DF = spark.read.csv(COMPRAS_FILEPATH, header=True)
+    df = DF
         
     # Trim all columns 
-    for column in DF.columns:
-        df = DF.withColumn(column, F.trim(F.col(column)))
+    for column in df.columns:
+        df = df.withColumn(column, F.trim(F.col(column)))
         
     # Add a temp index column
     df = df.withColumn('index', F.monotonically_increasing_id())
@@ -44,24 +56,23 @@ def compute_compras_stg(spark: SparkSession):
     
     df = df.withColumn('CONDICAO_PAGAMENTO',
         F.when(
-            F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30/60/90 DIAS', '30/60/90 DIAS')
-            .when(F.col('CONDICAO_PAGAMENTO') == 'A VISTA', 'A VISTA')
-            .when(F.col('CONDICAO_PAGAMENTO') == '30 DIAS', '30 DIAS')
-            .when(F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30 DIAS', '30 DIAS')
-            .when(F.col('CONDICAO_PAGAMENTO') == '30/60 DIAS', '30/60 DIAS')
-            .when(F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30/60 DIAS', '30/60 DIAS')
-        .otherwise(F.col('CONDICAO_PAGAMENTO') + ' (invalid)')
+                    F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30/60/90 DIAS', '30/60/90 DIAS')
+            .when(  F.col('CONDICAO_PAGAMENTO') == 'A VISTA',               'A VISTA')
+            .when(  F.col('CONDICAO_PAGAMENTO') == '30 DIAS',               '30 DIAS')
+            .when(  F.col('CONDICAO_PAGAMENTO') == '30/60 DIAS',            '30/60 DIAS')
+            .when(  F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30 DIAS',       'ENTRADA/30 DIAS')
+            .when(  F.col('CONDICAO_PAGAMENTO') == 'ENTRADA/30/60 DIAS',    'ENTRADA/30/60 DIAS')
+        .otherwise( F.col('CONDICAO_PAGAMENTO') + ' (invalid)')
     )
     
     # COMPLEMENTO column treatment
     df = df.na.fill('N/A', subset=['COMPLEMENTO'])
 
     # Compute a DataFrame with the nulls 
-    _df_not_nulls = df.dropna(subset=[column for column in df.columns if column != 'COMPLEMENTO'])
+    df_not_null = df.dropna(how='any', subset=[column for column in df.columns if column != 'COMPLEMENTO'])
     
     df_nulls = (
-        df
-        .transform(lambda df: subtract_by_index(df, _df_not_nulls))
+        subtract_by_index(df, df_not_null)
         .withColumn('inconsistency', F.lit('null column(s)'))
     )
     
@@ -73,9 +84,8 @@ def compute_compras_stg(spark: SparkSession):
     )
     
     # Compute a DataFrame with the invalid CEP
-    DF_CEPS = spark.read.csv(f'{env("SOURCE_PATH")}/TB_CEP_BR_2018.csv', header=False, sep=';')
-    df_ceps = DF_CEPS.withColumnRenamed('_c0', 'CEP_VALIDO')
-    df_ceps = df_ceps.select('CEP_VALIDO')
+    df_ceps = df_ceps.select('CEP')
+    df_ceps = df_ceps.withColumnRenamed('CEP', 'CEP_VALIDO')
     
     df_invalid_ceps = (
         # Lookup the valid CEPs and filter the valid ones
@@ -110,15 +120,15 @@ def compute_compras_stg(spark: SparkSession):
         .withColumn('inconsistency', F.lit('duplicated'))
     )
     
-    # Remove all rejeted data by the index column, except for the duplicated rows
+    # Remove all rejeted data by the index column
     df = (
         df
+        .transform(lambda df: subtract_by_index(df, df_nulls))
         .transform(lambda df: subtract_by_index(df, df_invalid_payment_condition))
         .transform(lambda df: subtract_by_index(df, df_invalids_cnpj))
         .transform(lambda df: subtract_by_index(df, df_invalid_ceps))
+        .drop('index').dropDuplicates()
     )
-    
-    df = df.dropDuplicates().drop('index')
     
     df_rejected = (
         df_duplicated.drop('index')
@@ -134,22 +144,22 @@ def compute_compras_stg(spark: SparkSession):
     
     return df, df_rejected
 
-#%% Load the function to load the stage data to the stage parquet file
 def load_compras_stg(df: DataFrame):
     """Load the stage data to the stage parquet file."""
-    # If the project is running with HDFS or another distributed file system, use the commented line below
-    #filepath = f'{env("TARGET_PATH")}/compras_stg.parquet'
+    # Considering that the files generated by the processes must be easy to understand (as they will be available on GitHub) 
+    # I chose to generate the data using Pandas. However, if you are interested, the code commented below loads the file using Spark
+    #filepath = f'{env("TARGET_PATH")}/compras_stg'
     #df.write.parquet(filepath, mode='overwrite')
     
     import pandas as pd
     filepath = f'{env("TARGET_PATH")}/compras_stg.parquet'
     pd.DataFrame(df.toPandas()).to_parquet(filepath)
     
-#%% Load the function to load the rejected data to the rejected csv file
 def load_rejected_compras_stg(df: DataFrame):
     """Load the rejected data to the rejected csv file."""
     
-    # If the project is running with HDFS or another distributed file system, use the commented line below
+    # Considering that the files generated by the processes must be easy to understand (as they will be available on GitHub) 
+    # I chose to generate the data using Pandas. However, if you are interested, the code commented below loads the file using Spark
     #filepath = f'{env("TARGET_PATH")}/rejected_compras_stg'
     #df.write.csv(filepath, mode='overwrite', header=True)
     
@@ -158,11 +168,15 @@ def load_rejected_compras_stg(df: DataFrame):
     pd.DataFrame(df.toPandas()).to_csv(filepath, index=False, sep=';')
 #%% Job execution
 if __name__ == "__main__":
-    df, df_rejected = compute_compras_stg(SPARK)
+    df_ceps = compute_cep(SPARK)
+    df, df_rejected = compute_compras_stg(SPARK, df_ceps)
     
     load_compras_stg(df)
     load_rejected_compras_stg(df_rejected)
     
-    LOGGER.info("the stage data was loaded successfully. Count: %s", df.count())
-    LOGGER.info("the rejected data was loaded successfully. Count: %s", df_rejected.count())
+    written_lines = df.count()
+    rejected_lines = df_rejected.count()
+    
+    LOGGER.info(f"Written {written_lines} rows")
+    LOGGER.info(f"Rejected {rejected_lines} rows")
     

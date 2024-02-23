@@ -1,4 +1,3 @@
-
 # TCS-Exemplo-de-implementacao-PySpark
 
 ## Descrição
@@ -9,10 +8,12 @@ Este repositório contém um exemplo de implementação de um pipeline de dados 
 
 - Docker
 - Docker Compose
-- Python 3.10
+- Python 3.10.12
+- Recomendado: Poetry
 
 ## Utilização 
 
-Primeiro, suba o serviço do Spark usando o comando 'docker-compose up' na raiz do projeto. 
-Agora, configure o arquivo .env com as variáveis de ambiente necessárias de acordo com o arquivo .env.example, colocando as credenciais do seu banco de dados e o diretório de entrada e saida dos arquivos (no caso, é o diretório da pasta 'data' na raiz do projeto).
-Uma vez que o serviço do Spark estiver rodando e o arquivo .env configurado, pode executar os scripts da pasta "src/spark_code".
+Configure as variáveis de ambiente no arquivo .env de acordo com o arquivo .env.example e configure os volumes e variaveis de ambiente no arquivo docker-compose.yml de acordo com suas alterações no .env. Recomendo utilizar diretórios absolutos nos valores das variáveis de ambiente do arquivo .env e docker-compose.yml.
+Suba o serviço do Spark e MSSQL usando o comando 'docker-compose up' na raiz do projeto. 
+Se conecte no banco de dados e execute o script de criação de tabelas localizado na pasta "db/create_tables.sql".
+Uma vez que o serviço do Spark estiver rodando e o arquivo .env configurado, pode executar os scripts da pasta "src".

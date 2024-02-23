@@ -7,7 +7,7 @@ Origem: Arquivo CSV contendo todos os dados de todas as tabelas modeladas
 ## Carga nas tabelas do BD a partir do CSV 
 
 ### Resumo:
-    - Upsert na tabela de Notas Fiscais Entrada (No de VENDAS é SAIDA) 
+    - Upsert na tabela de Notas Fiscais Entrada
     - Upsert na tabela de clientes
     - Upsert na tabela Condição de pagamento 
     - Upsert na tabela de Cep
