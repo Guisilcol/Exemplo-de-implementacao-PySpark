@@ -21,3 +21,12 @@ Para seguir este guia, é necessário ter instalado em seu ambiente:
 - Execução de Scripts: Com os serviços rodando e o arquivo .env configurado, você está pronto para executar os scripts localizados na pasta "src". A execução pode ser realizada por meio do Jupyter Notebook, utilizando o VSCode para uma experiência integrada.
 
 Seguindo estas instruções, você estará apto a configurar e operar o pipeline de dados proposto.
+
+
+# TODO
+
+- [ ] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
+- [ ] Adicionar um serviço de Airflow no projeto
+- [ ] Criar e agendar a execução de DAGs para a execução do pipeline
+- [ ] Configurar o projeto para poder desenvolver e testar scripts localmente que serão executados no AWS Glue 
+- [ ] Criar a agendar a execução de jobs no AWS Glue usando StepFunctions
