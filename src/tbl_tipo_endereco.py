@@ -22,13 +22,7 @@ LOGGER.setLevel(logging.INFO)
 def compute_tipo_pagamento(spark: SparkSession):
     TIPO_ENDERECO_FILEPATH = f'{env("SOURCE_PATH")}/tipo_endereco.csv'
 
-    TIPO_ENDERECO_SCHEMA = T.StructType([
-        T.StructField("id_tipo_endereco", T.IntegerType(), True),
-        T.StructField("nome_tipo_endereco", T.StringType(), True),
-        T.StructField("sigla_endereco", T.StringType(), True)
-    ])
-    
-    df = spark.read.csv(TIPO_ENDERECO_FILEPATH, header=True, sep=',', schema=TIPO_ENDERECO_SCHEMA)
+    df = spark.read.csv(TIPO_ENDERECO_FILEPATH, header=True, sep=',')
     
     # Data cleaning
     df = df.withColumn('nome_tipo_endereco', F.upper(F.col('nome_tipo_endereco')))
