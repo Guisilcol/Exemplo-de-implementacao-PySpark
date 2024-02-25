@@ -29,4 +29,5 @@ Seguindo estas instruções, você estará apto a configurar e operar o pipeline
 - [ ] Adicionar um serviço de Airflow no projeto
 - [ ] Criar e agendar a execução de DAGs para a execução do pipeline
 - [ ] Configurar o projeto para poder desenvolver e testar scripts localmente que serão executados no AWS Glue 
-- [ ] Criar a agendar a execução de jobs no AWS Glue usando StepFunctions
+- [ ] Converter os scripts para AWS Glue
+- [ ] Criar e agendar a execução de jobs no AWS Glue usando StepFunctions
