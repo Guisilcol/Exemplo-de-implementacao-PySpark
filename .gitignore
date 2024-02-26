@@ -3,3 +3,4 @@
 /_mssql_data
 /project_samples
 **/*.pyc
+**/__pycache__
