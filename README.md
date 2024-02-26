@@ -25,7 +25,7 @@ Seguindo estas instruções, você estará apto a configurar e operar o pipeline
 
 # TODO
 
-- [ ] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
+- [x] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
 - [ ] Adicionar um serviço de Airflow no projeto
 - [ ] Criar e agendar a execução de DAGs para a execução do pipeline
 - [ ] Configurar o projeto para poder desenvolver e testar scripts localmente que serão executados no AWS Glue 
