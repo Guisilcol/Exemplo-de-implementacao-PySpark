@@ -3,7 +3,6 @@ import logging
 
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
-import pyspark.sql.types as T
 
 from internal.mssql_handler import merge_into_mssql
 from internal.pyspark_helper import get_pre_configured_spark_session_builder, get_jdbc_options
@@ -37,9 +36,22 @@ def compute_notas_fiscais_de_entrada(spark: SparkSession):
         .option("query", SQL) \
         .load()
 
+def compute_programacao_pagamento_pendente(spark: SparkSession):
+    """Compute the programcao_pagamento dataframe"""
+    
+    SQL = """
+        SELECT ID_NF_ENTRADA, DATA_VENCIMENTO, NUM_PARCELA, VALOR_PARCELA 
+        FROM PROGRAMACAO_PAGAMENTO 
+        WHERE STATUS_PAGAMENTO = 'PENDENTE'
+    """
+    return spark.read \
+        .format("jdbc") \
+        .options(**get_jdbc_options()) \
+        .option("query", SQL) \
+        .load()
 
 #%% Load the function to compute the stage data for the table 'tipo_pagamento'
-def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame):
+def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame, df_programacao_pagamento_pendente: DataFrame):
     """Compute the Programacao Pagamento dataframe using the Notas Fiscais de Entrada dataframe"""
     
     df = (
@@ -53,6 +65,15 @@ def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame):
     # I using the expr function because the F.add_months function not accept a column as integer parameter to increment the date 
     df = df.withColumn("DATA_VENCIMENTO", F.expr("add_months(DATA_EMISSAO, NUM_PARCELA - 1)"))
     
+    df = df.select(
+        'ID_NF_ENTRADA',
+        'DATA_VENCIMENTO',
+        'NUM_PARCELA',
+        'VALOR_PARCELA'
+    )
+    
+    df = df.union(df_programacao_pagamento_pendente)
+    
     # All dates equal or minor than today are considered as "PAGO", else "PENDENTE"
     df = (
         df
@@ -61,19 +82,12 @@ def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame):
                     .otherwise(F.lit("PENDENTE")))
     )
     
-    df = df.select(
-        'ID_NF_ENTRADA',
-        'DATA_VENCIMENTO',
-        'NUM_PARCELA',
-        'VALOR_PARCELA',
-        'STATUS_PAGAMENTO'
-    )
-    
     return df
 #%% Job execution
 if __name__ == "__main__":
     df_notas_fiscais_entrada = compute_notas_fiscais_de_entrada(SPARK)
-    df = compute_programacao_pagamento(df_notas_fiscais_entrada)
+    df_programacao_pendente = compute_programacao_pagamento_pendente(SPARK)
+    df = compute_programacao_pagamento(df_notas_fiscais_entrada, df_programacao_pendente)
     
     statiscs = merge_into_mssql(df, 'PROGRAMACAO_PAGAMENTO', ['ID_NF_ENTRADA', 'NUM_PARCELA'])
     
