@@ -26,8 +26,8 @@ Seguindo estas instruções, você estará apto a configurar e operar o pipeline
 # TODO
 
 - [x] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
-- [ ] Adicionar um serviço de Airflow no projeto
-- [ ] Criar e agendar a execução de DAGs para a execução do pipeline
-- [ ] Configurar o projeto para poder desenvolver e testar scripts localmente que serão executados no AWS Glue 
-- [ ] Converter os scripts para AWS Glue
+- [ ] Configurar o projeto para usar a imagem do AWS Glue no Docker para desenvolvimento local
+- [ ] Criar buckets no S3 para armazenar os dados e criar as tabelas no Athena utilizando o padrão Apache Iceberg
+- [ ] Converter os scripts desenvolvidos para AWS Glue
 - [ ] Criar e agendar a execução de jobs no AWS Glue usando StepFunctions
+- [ ] Reescrever os scripts PySpark em AWS Glue Python Shell
