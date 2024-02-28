@@ -1,48 +1,14 @@
-version: '3'
-
+version: '3.7'
 services:
-  mssql:
-    user: root
-    image: mcr.microsoft.com/mssql/server:2019-latest
+  jupyter:
+    container_name: glue_jupyter
+    command: /home/glue_user/jupyter/jupyter_start.sh
     environment:
-      SA_PASSWORD: ${DB_PASSWORD}
-      ACCEPT_EULA: "Y"
+      - DISABLE_SSL=true
+    image: amazon/aws-glue-libs:glue_libs_3.0.0_image_01
     ports:
-      - "1433:1433"
+      - '8080:8080'
+    restart: always
     volumes:
-      - ./_mssql_data:/var/opt/mssql 
-
-  spark-master:
-    image: bitnami/spark:3
-    environment:
-      - SPARK_MODE=master
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_MASTER_PORT=7077
-      - SPARK_MASTER_WEBUI_PORT=8080
-    ports:
-      - "8080:8080"
-    networks:
-      - spark-network
-    volumes:
-      - ${BASE_PATH}:/bitnami/spark
-
-  spark-worker:
-    image: bitnami/spark:3
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_CORES=1
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_WORKER_WEBUI_PORT=8081
-    depends_on:
-      - spark-master
-    ports:
-      - "8081:8081"
-    networks:
-      - spark-network
-    volumes:
-      - ${BASE_PATH}:/bitnami/spark
-      
-networks:
-  spark-network:
-    driver: bridge
+      - ${AWS_PROFILE_FOLDER}:/home/glue_user/.aws
+      - ./src/aws_glue/:/home/glue_user/workspace/jupyter_workspace/
