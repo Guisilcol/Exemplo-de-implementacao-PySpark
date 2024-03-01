@@ -21,13 +21,3 @@ Para seguir este guia, é necessário ter instalado em seu ambiente:
 - Execução de Scripts: Com os serviços rodando e o arquivo .env configurado, você está pronto para executar os scripts localizados na pasta "src". A execução pode ser realizada por meio do Jupyter Notebook, utilizando o VSCode para uma experiência integrada.
 
 Seguindo estas instruções, você estará apto a configurar e operar o pipeline de dados proposto.
-
-
-# TODO
-
-- [x] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
-- [ ] Configurar o projeto para usar a imagem do AWS Glue no Docker para desenvolvimento local
-- [ ] Criar buckets no S3 para armazenar os dados e criar as tabelas no Athena utilizando o padrão Apache Iceberg
-- [ ] Converter os scripts desenvolvidos para AWS Glue
-- [ ] Criar e agendar a execução de jobs no AWS Glue usando StepFunctions
-- [ ] Reescrever os scripts PySpark em AWS Glue Python Shell
