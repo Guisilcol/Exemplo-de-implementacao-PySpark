@@ -1,26 +1,23 @@
 #%% Importing the libraries
 from os import getenv as env
-import logging
 
 from pyspark.sql import SparkSession
+import pyspark.sql.functions as F
 
-from internal.mssql_handler import merge_into_mssql
-from internal.pyspark_helper import get_pre_configured_spark_session_builder
+from external_libs.pyspark_helper import get_pre_configured_glue_session
+from external_libs.data_loader import merge_dataframe_with_iceberg_table
 
 #%% Initialize the SparkSession
-SPARK = get_pre_configured_spark_session_builder() \
-    .appName("Load Fornecedores Table") \
-    .getOrCreate()
-
-logging.basicConfig()
-LOGGER = logging.getLogger("pyspark")
-LOGGER.setLevel(logging.INFO)
+SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session({
+    "WORK_PATH": env("WORK_PATH"),
+    "AWS_WAREHOUSE": env("AWS_WAREHOUSE")
+})
 
 #%% Load the function to compute fornecedores dataframe
 def compute_fornecedores(spark: SparkSession):
-    COMPRAS_STG_FILEPATH = f'{env("TARGET_PATH")}/compras_stg.parquet'
+    COMPRAS_STG_FILEPATH = f'{env("WORK_PATH")}/compras.parquet'
     
-    df = spark.read.parquet(COMPRAS_STG_FILEPATH)
+    df = spark.read.format('parquet').load(COMPRAS_STG_FILEPATH)
     
     # Select the columns, drop duplicates and rename the columns
     df = df.select('NOME_FORNECEDOR', 'CNPJ_FORNECEDOR', 'EMAIL_FORNECEDOR', 'TELEFONE_FORNECEDOR')
@@ -34,15 +31,12 @@ def compute_fornecedores(spark: SparkSession):
         .withColumnRenamed('TELEFONE_FORNECEDOR', 'TELEFONE')
     )
        
+    df = df.withColumn('ID_FORNECEDOR', F.hash(F.col('CNPJ')))   
+       
     return df
 
 #%% Job execution
 if __name__ == "__main__":
     df = compute_fornecedores(SPARK)    
-    statistics = merge_into_mssql(df, 'FORNECEDORES', ['CNPJ'])
+    merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'fornecedores', ['CNPJ'])
 
-    LOGGER.info(f"Inserted {statistics['INSERT']} rows")
-    LOGGER.info(f"Updated {statistics['UPDATE']} rows")
-
-
-    

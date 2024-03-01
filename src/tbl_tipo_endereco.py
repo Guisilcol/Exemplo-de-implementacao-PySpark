@@ -1,26 +1,21 @@
 #%% Importing the libraries
 from os import getenv as env
-import logging
 
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
-import pyspark.sql.types as T
 
-from internal.mssql_handler import merge_into_mssql
-from internal.pyspark_helper import get_pre_configured_spark_session_builder
+from external_libs.pyspark_helper import get_pre_configured_glue_session
+from external_libs.data_loader import merge_dataframe_with_iceberg_table
 
 #%% Initialize the SparkSession
-SPARK = get_pre_configured_spark_session_builder() \
-    .appName("Load Tipo Endereco Table") \
-    .getOrCreate()
-
-logging.basicConfig()
-LOGGER = logging.getLogger("pyspark")
-LOGGER.setLevel(logging.INFO)
+SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session({
+    "SOURCE_PATH": env("SOURCE_PATH"),
+    "AWS_WAREHOUSE": env("AWS_WAREHOUSE")
+})
 
 #%% Load the function to compute the stage data for the table 'tipo_pagamento'
-def compute_tipo_pagamento(spark: SparkSession):
-    TIPO_ENDERECO_FILEPATH = f'{env("SOURCE_PATH")}/tipo_endereco.csv'
+def compute_tipo_pagamento(spark: SparkSession, source_path: str = None):
+    TIPO_ENDERECO_FILEPATH = f'{source_path}/tipo_endereco.csv'
 
     df = spark.read.csv(TIPO_ENDERECO_FILEPATH, header=True, sep=',')
     
@@ -37,12 +32,10 @@ def compute_tipo_pagamento(spark: SparkSession):
     df = df.withColumnRenamed('nome_tipo_endereco', 'DESCRICAO')
     df = df.withColumnRenamed('sigla_endereco', 'SIGLA')
     
+    df = df.withColumn('ID_TIPO_ENDERECO', F.col('ID_TIPO_ENDERECO').cast('int'))
     return df
 #%% Job execution
 if __name__ == "__main__":
-    df = compute_tipo_pagamento(SPARK)
-    statiscs = merge_into_mssql(df, 'TIPO_ENDERECO', ['ID_TIPO_ENDERECO'])
-    
-    LOGGER.info(f"Inserted {statiscs['INSERT']} rows")
-    LOGGER.info(f"Updated {statiscs['UPDATE']} rows")
+    df = compute_tipo_pagamento(SPARK, ARGS['SOURCE_PATH'])
+    merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'tipo_endereco', ['ID_TIPO_ENDERECO'])
     

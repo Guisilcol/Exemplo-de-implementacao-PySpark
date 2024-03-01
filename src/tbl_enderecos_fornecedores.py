@@ -1,47 +1,34 @@
 #%% Importing the libraries
 from os import getenv as env
-import logging
 
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
+import pyspark.sql.types as T
+from awsglue.context import GlueContext
 
-from internal.mssql_handler import merge_into_mssql
-from internal.pyspark_helper import get_pre_configured_spark_session_builder, get_jdbc_options
+from external_libs.pyspark_helper import get_pre_configured_glue_session
+from external_libs.data_loader import merge_dataframe_with_iceberg_table
 
 #%% Initialize the SparkSession
-SPARK = get_pre_configured_spark_session_builder() \
-    .appName("Load Endereco Fornecedores Table") \
-    .getOrCreate()
-
-logging.basicConfig()
-LOGGER = logging.getLogger("pyspark")
-LOGGER.setLevel(logging.INFO)
+SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session({
+    "WORK_PATH": env("WORK_PATH"),
+    "AWS_WAREHOUSE": env("AWS_WAREHOUSE")
+})
 
 #%% Load the function to compute dataframes
-def compute_compras_stg(spark: SparkSession):
+def compute_compras_stg(spark: SparkSession, source_path: str = None):
     """Compute the dataframe for the compras_stg table."""
-    COMPRAS_STG_FILEPATH = f'{env("TARGET_PATH")}/compras_stg.parquet'
+    
+    COMPRAS_STG_FILEPATH = f'{source_path}/compras.parquet'
     return spark.read.parquet(COMPRAS_STG_FILEPATH)
     
-def compute_fornecedores_table(spark: SparkSession):
+def compute_fornecedores_table(glue_context: GlueContext):
     """Compute the dataframe for the fornecedores table."""
-    TABLE_NAME = 'FORNECEDORES'
-    return spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("dbtable", TABLE_NAME) \
-        .load()
+    return glue_context.create_data_frame_from_catalog(database = "compras", table_name = 'FORNECEDORES')
 
-def compute_tipo_endereco_table(spark: SparkSession):
+def compute_tipo_endereco_table(glue_context: GlueContext):
     """Compute the dataframe for the tipo_endereco table."""
-    TABLE_NAME = 'TIPO_ENDERECO'
-    df = spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("dbtable", TABLE_NAME) \
-        .load()
-    
-    return df
+    return glue_context.create_data_frame_from_catalog(database = "compras", table_name = 'TIPO_ENDERECO')
 
 def compute_enderecos_fornecedores_table(df_compras_stg: DataFrame, df_fornecedores: DataFrame, df_tipo_endereco: DataFrame):
     """Compute the dataframe for the enderecos_fornecedores table."""
@@ -67,20 +54,17 @@ def compute_enderecos_fornecedores_table(df_compras_stg: DataFrame, df_fornecedo
         df_compras_stg['COMPLEMENTO']
     )
     
+    df = df.withColumn('CEP', F.col('CEP').cast(T.IntegerType()))
+    df = df.withColumn('ID_ENDERECO_FORNECEDOR', F.hash(F.concat_ws('', df['CEP'], df['ID_FORNECEDOR'], df['ID_TIPO_ENDERECO'])))
+    
     return df
 
 #%% Job execution
 if __name__ == "__main__":
-    df_compras_stg = compute_compras_stg(SPARK)
-    df_fornecedores = compute_fornecedores_table(SPARK)
-    df_tipo_endereco = compute_tipo_endereco_table(SPARK)
+    df_compras_stg = compute_compras_stg(SPARK, ARGS['WORK_PATH'])
+    df_fornecedores = compute_fornecedores_table(GLUE_CONTEXT)
+    df_tipo_endereco = compute_tipo_endereco_table(GLUE_CONTEXT)
     
     df = compute_enderecos_fornecedores_table(df_compras_stg, df_fornecedores, df_tipo_endereco)
     
-    statiscs = merge_into_mssql(df, 'ENDERECOS_FORNECEDORES', ['CEP', 'ID_FORNECEDOR', 'ID_TIPO_ENDERECO'])
-    
-    LOGGER.info(f"Inserted {statiscs['INSERT']} rows")
-    LOGGER.info(f"Updated {statiscs['UPDATE']} rows")
-
-
-    
+    merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'enderecos_fornecedores', ['CEP', 'ID_FORNECEDOR', 'ID_TIPO_ENDERECO'])

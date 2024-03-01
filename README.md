@@ -1,33 +1,31 @@
-# Implementação de Pipeline de Dados com PySpark
+# Implementação de Pipeline de Dados com AWS Glue
+
 ## Descrição do Projeto
-Este repositório é dedicado à demonstração da construção de um pipeline de dados utilizando as tecnologias Spark, Python e Docker.
+Este repositório é dedicado à demonstração da construção de um pipeline de dados adaptado para o contexto da AWS, utilizando as tecnologias AWS Glue, S3, Glue Catalog, Spark, Python e Docker. O objetivo é proporcionar uma visão prática sobre como desenvolver e gerenciar pipelines de dados eficientes na nuvem da AWS.
 
 ## Pré-requisitos
 Para seguir este guia, é necessário ter instalado em seu ambiente:
 
-    - Docker
-    - Docker Compose
-    - Python 3.10.12
-    - Poetry (opcional, mas recomendado)
+- Docker
+- Python 3.10.12
+- AWS CLI configurado com credenciais de acesso
 
 ## Instruções de Uso
 
-- Configuração Inicial: Comece pela configuração das variáveis de ambiente. Isso é feito no arquivo .env, baseando-se no modelo fornecido pelo arquivo .env.example. É importante destacar que o docker-compose.yml já está preparado para utilizar as variáveis de ambiente definidas no arquivo .env, eliminando a necessidade de ajustes adicionais neste arquivo.
+### Configuração Inicial
+- **Preparação do Ambiente AWS**: Antes de tudo, assegure-se de que suas credenciais da AWS estão configuradas corretamente. Isso inclui acesso ao AWS Glue, S3 e Glue Catalog.
+  
+- **Variáveis de Ambiente**: Configure as variáveis de ambiente necessárias para a execução dos scripts AWS Glue. Isso é feito no arquivo `.env`, baseando-se no modelo fornecido pelo arquivo `.env.example`. Este passo é crucial para garantir que o container Docker possa acessar os recursos da AWS corretamente.
 
-- Inicialização dos Serviços: Com as variáveis de ambiente devidamente configuradas no arquivo .env, inicie os serviços necessários, incluindo o Spark e o MSSQL, executando o comando docker-compose up no terminal, diretamente na pasta raiz do projeto.
+### Inicialização do Ambiente de Desenvolvimento
+- **Subindo o Container Docker**: Ao invés de utilizar um arquivo `docker-compose`, neste projeto utilizamos um script shell (`nome_do_script.sh`) para subir um container Docker. Este container é otimizado para o desenvolvimento de código AWS, contendo todas as ferramentas e bibliotecas necessárias. Execute o script no terminal para iniciar o container.
 
-- Criação de Tabelas: Após a inicialização dos serviços, acesse o banco de dados e execute o script disponível em "db/create_tables.sql" para criar as tabelas necessárias para o funcionamento do pipeline.
+### Adicionando e Removendo Módulos Python
+- **Gerenciamento de Módulos**: Uma vez no ambiente do container, você pode adicionar ou remover módulos Python utilizando os scripts `pip_install.sh` e `pip_remove.sh`, respectivamente. Esses scripts facilitam a gestão das dependências necessárias para o desenvolvimento dos códigos destinados ao AWS Glue.
 
-- Execução de Scripts: Com os serviços rodando e o arquivo .env configurado, você está pronto para executar os scripts localizados na pasta "src". A execução pode ser realizada por meio do Jupyter Notebook, utilizando o VSCode para uma experiência integrada.
+### Desenvolvimento e Execução de Scripts AWS Glue
+- **Código AWS Glue**: Todo o código foi adaptado para trabalhar com os serviços AWS Glue, S3 e Glue Catalog. Você encontrará os scripts dentro da pasta `src`, prontos para serem desenvolvidos e testados diretamente do container Docker.
 
-Seguindo estas instruções, você estará apto a configurar e operar o pipeline de dados proposto.
+- **Execução e Testes**: Após o desenvolvimento, você pode testar seus scripts AWS Glue diretamente no ambiente configurado. É importante seguir as melhores práticas da AWS para a execução e gerenciamento de jobs do Glue.
 
-
-# TODO
-
-- [x] Adicionar chaves estrangeiras e índices às tabelas do banco de dados
-- [ ] Configurar o projeto para usar a imagem do AWS Glue no Docker para desenvolvimento local
-- [ ] Criar buckets no S3 para armazenar os dados e criar as tabelas no Athena utilizando o padrão Apache Iceberg
-- [ ] Converter os scripts desenvolvidos para AWS Glue
-- [ ] Criar e agendar a execução de jobs no AWS Glue usando StepFunctions
-- [ ] Reescrever os scripts PySpark em AWS Glue Python Shell
+Seguindo estas instruções, você estará apto a configurar, desenvolver e gerenciar pipelines de dados na AWS, utilizando as poderosas ferramentas que a plataforma oferece.

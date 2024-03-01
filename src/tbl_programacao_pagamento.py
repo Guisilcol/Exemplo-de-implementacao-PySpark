@@ -1,22 +1,20 @@
 #%% Importing the libraries
-import logging
+from os import getenv as env
 
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
+from awsglue.context import GlueContext 
 
-from internal.mssql_handler import merge_into_mssql
-from internal.pyspark_helper import get_pre_configured_spark_session_builder, get_jdbc_options
+from external_libs.pyspark_helper import get_pre_configured_glue_session
+from external_libs.data_loader import merge_dataframe_with_iceberg_table
 
 #%% Initialize the SparkSession
-SPARK = get_pre_configured_spark_session_builder() \
-    .appName("Load Programacao Pagamento Table") \
-    .getOrCreate()
+SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session({
+    "AWS_WAREHOUSE": env("AWS_WAREHOUSE")
+})
 
-logging.basicConfig()
-LOGGER = logging.getLogger("pyspark")
-LOGGER.setLevel(logging.INFO)
-
-def compute_notas_fiscais_de_entrada(spark: SparkSession):
+#%% Load the function to compute dataframes
+def compute_notas_fiscais_de_entrada(glue_context: GlueContext):
     """Compute the dataframe using a query"""
     SQL = """
     SELECT
@@ -25,30 +23,22 @@ def compute_notas_fiscais_de_entrada(spark: SparkSession):
         A.VALOR_TOTAL,
         B.QTD_PARCELAS
     FROM
-        NOTAS_FISCAIS_ENTRADA A
-        INNER JOIN CONDICAO_PAGAMENTO B  
+        glue_catalog.compras.notas_fiscais_entrada A
+        INNER JOIN glue_catalog.compras.condicao_pagamento B  
             ON A.ID_CONDICAO = B.ID_CONDICAO
     """
     
-    return spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("query", SQL) \
-        .load()
+    return glue_context.sql(SQL)
 
-def compute_programacao_pagamento_pendente(spark: SparkSession):
+def compute_programacao_pagamento_pendente(glue_context: GlueContext):
     """Compute the programcao_pagamento dataframe"""
     
     SQL = """
         SELECT ID_NF_ENTRADA, DATA_VENCIMENTO, NUM_PARCELA, VALOR_PARCELA 
-        FROM PROGRAMACAO_PAGAMENTO 
+        FROM glue_catalog.compras.programacao_pagamento 
         WHERE STATUS_PAGAMENTO = 'PENDENTE'
     """
-    return spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("query", SQL) \
-        .load()
+    return glue_context.sql(SQL)
 
 #%% Load the function to compute the stage data for the table 'tipo_pagamento'
 def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame, df_programacao_pagamento_pendente: DataFrame):
@@ -82,6 +72,8 @@ def compute_programacao_pagamento(df_notas_fiscais_entrada: DataFrame, df_progra
                     .otherwise(F.lit("PENDENTE")))
     )
     
+    df = df.withColumn('ID_PROG_PAGAMENTO', F.hash(df['ID_NF_ENTRADA'], df['NUM_PARCELA']))
+    
     return df
 #%% Job execution
 if __name__ == "__main__":
@@ -89,8 +81,5 @@ if __name__ == "__main__":
     df_programacao_pendente = compute_programacao_pagamento_pendente(SPARK)
     df = compute_programacao_pagamento(df_notas_fiscais_entrada, df_programacao_pendente)
     
-    statiscs = merge_into_mssql(df, 'PROGRAMACAO_PAGAMENTO', ['ID_NF_ENTRADA', 'NUM_PARCELA'])
-    
-    LOGGER.info(f"Inserted {statiscs['INSERT']} rows")
-    LOGGER.info(f"Updated {statiscs['UPDATE']} rows")
+    merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'programacao_pagamento', ['ID_NF_ENTRADA', 'NUM_PARCELA'])
     

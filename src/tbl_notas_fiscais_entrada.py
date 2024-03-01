@@ -1,50 +1,33 @@
 #%% Importing the libraries
 from os import getenv as env
-import logging
 
 from pyspark.sql import SparkSession, DataFrame
 import pyspark.sql.functions as F
+from awsglue.context import GlueContext 
 
-from internal.mssql_handler import merge_into_mssql
-from internal.pyspark_helper import get_pre_configured_spark_session_builder, get_jdbc_options
+from external_libs.pyspark_helper import get_pre_configured_glue_session
+from external_libs.data_loader import merge_dataframe_with_iceberg_table
 
 #%% Initialize the SparkSession
-SPARK = get_pre_configured_spark_session_builder() \
-    .appName("Load Notas Fiscais Table") \
-    .getOrCreate()
-
-logging.basicConfig()
-LOGGER = logging.getLogger("pyspark")
-LOGGER.setLevel(logging.INFO)
+SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session({
+    "WORK_PATH": env("WORK_PATH"),
+    "AWS_WAREHOUSE": env("AWS_WAREHOUSE")
+})
 
 #%% Load the function to compute dataframes
-def compute_compras_stg(spark: SparkSession):
+def compute_compras_stg(spark: SparkSession, source_path: str):
     """Compute the dataframe for the compras_stg table."""
 
-    COMPRAS_STG_FILEPATH = f'{env("TARGET_PATH")}/compras_stg.parquet'
+    COMPRAS_STG_FILEPATH = f'{source_path}/compras.parquet'
     return spark.read.parquet(COMPRAS_STG_FILEPATH)
     
-def compute_fornecedores_table(spark: SparkSession):
+def compute_fornecedores_table(glue_context: GlueContext):
     """Compute the dataframe for the fornecedores table."""
-     
-    TABLE_NAME = 'FORNECEDORES'
-    return spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("dbtable", TABLE_NAME) \
-        .load()
+    return glue_context.create_data_frame_from_catalog(database = "compras", table_name = 'FORNECEDORES')
 
-def compute_condicao_pagamento_table(spark: SparkSession):
+def compute_condicao_pagamento_table(glue_context: GlueContext):
     """Compute the dataframe for the CONDICAO_PAGAMENTO table."""
-    
-    TABLE_NAME = 'CONDICAO_PAGAMENTO'
-    df = spark.read \
-        .format("jdbc") \
-        .options(**get_jdbc_options()) \
-        .option("dbtable", TABLE_NAME) \
-        .load()
-    
-    return df
+    return glue_context.create_data_frame_from_catalog(database = "compras", table_name = 'CONDICAO_PAGAMENTO')
 
 def compute_notas_fiscais_entrada_table(df_compras_stg: DataFrame, df_fornecedores: DataFrame, df_condicao_pagamento: DataFrame):
     """Compute the dataframe for the NOTAS_FISCAIS_ENTRADA table."""
@@ -82,19 +65,17 @@ def compute_notas_fiscais_entrada_table(df_compras_stg: DataFrame, df_fornecedor
     df = df.withColumn('VALOR_TOTAL', F.col('VALOR_TOTAL').cast('decimal'))
     df = df.withColumn('QTD_ITEM', F.col('QTD_ITEM').cast('integer'))
     
+    df = df.withColumn('ID_NF_ENTRADA', F.hash(df['NUMERO_NF']))
+    
     return df
 
 #%% Job execution
 if __name__ == "__main__":
-    df_compras_stg = compute_compras_stg(SPARK)
-    df_fornecedores = compute_fornecedores_table(SPARK)
-    df_condicao_pagamento = compute_condicao_pagamento_table(SPARK)
+    df_compras_stg = compute_compras_stg(SPARK, ARGS['WORK_PATH'])
+    df_fornecedores = compute_fornecedores_table(GLUE_CONTEXT)
+    df_condicao_pagamento = compute_condicao_pagamento_table(GLUE_CONTEXT)
     
     df = compute_notas_fiscais_entrada_table(df_compras_stg, df_fornecedores, df_condicao_pagamento)
 
-    statistics = merge_into_mssql(df, 'NOTAS_FISCAIS_ENTRADA', ['NUMERO_NF'])
-
-    LOGGER.info(f"Inserted {statistics['INSERT']} rows")
-    LOGGER.info(f"Updated {statistics['UPDATE']} rows")
-
+    merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'notas_fiscais_entrada', ['NUMERO_NF'])
 
