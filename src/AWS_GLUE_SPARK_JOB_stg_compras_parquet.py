@@ -153,7 +153,7 @@ def load_compras_stg(df: DataFrame, target_folder: str):
     """Load the stage data to the stage parquet file.""" 
 
     filepath = f'{target_folder}/compras.parquet'
-    df.write.parquet(filepath)
+    df.write.parquet(filepath, mode='overwrite')
 
 def load_rejected_compras_stg(df: DataFrame, target_folder: str):
     """Load the rejected data to the rejected csv file."""

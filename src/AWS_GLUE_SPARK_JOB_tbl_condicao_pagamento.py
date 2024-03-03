@@ -16,8 +16,8 @@ SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session(
 
 
 #%% Load compute functions 
-def compute_condicao_pagamento(spark: SparkSession):
-    FILEPATH = f'{env("SOURCE_PATH")}/condicao_pagamento.csv'
+def compute_condicao_pagamento(spark: SparkSession, source_path: str):
+    FILEPATH = f'{source_path}/condicao_pagamento.csv'
 
     df = spark.read.csv(FILEPATH, header=True, sep=',')
     df = df.select('ID_CONDICAO', 'DESCRICAO', 'QTD_PARCELAS')
@@ -32,6 +32,6 @@ def compute_condicao_pagamento(spark: SparkSession):
 
 #%% Job execution
 if __name__ == "__main__":
-    df = compute_condicao_pagamento(SPARK)
+    df = compute_condicao_pagamento(SPARK, ARGS['SOURCE_PATH'])
     merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'condicao_pagamento', ['ID_CONDICAO'])
 

@@ -14,8 +14,8 @@ SPARK, SPARK_CONTEXT, GLUE_CONTEXT, JOB, ARGS = get_pre_configured_glue_session(
 })
 
 #%% Load the function to compute fornecedores dataframe
-def compute_fornecedores(spark: SparkSession):
-    COMPRAS_STG_FILEPATH = f'{env("WORK_PATH")}/compras.parquet'
+def compute_fornecedores(spark: SparkSession, work_path: str):
+    COMPRAS_STG_FILEPATH = f'{work_path}/compras.parquet'
     
     df = spark.read.format('parquet').load(COMPRAS_STG_FILEPATH)
     
@@ -37,6 +37,6 @@ def compute_fornecedores(spark: SparkSession):
 
 #%% Job execution
 if __name__ == "__main__":
-    df = compute_fornecedores(SPARK)    
+    df = compute_fornecedores(SPARK, ARGS['WORK_PATH'])    
     merge_dataframe_with_iceberg_table(GLUE_CONTEXT, df, 'compras', 'fornecedores', ['CNPJ'])
 
