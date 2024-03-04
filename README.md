@@ -29,3 +29,8 @@ Para seguir este guia, é necessário ter instalado em seu ambiente:
 - **Execução e Testes**: Após o desenvolvimento, você pode testar seus scripts AWS Glue diretamente no ambiente configurado. É importante seguir as melhores práticas da AWS para a execução e gerenciamento de jobs do Glue.
 
 Seguindo estas instruções, você estará apto a configurar, desenvolver e gerenciar pipelines de dados na AWS, utilizando as poderosas ferramentas que a plataforma oferece.
+![WhatsApp Image 2024-03-04 at 14 42 17](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/d05d1d11-7673-4fff-840d-308fca7341b2)
+
+![WhatsApp Image 2024-03-03 at 19 42 57](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/26c6bb2e-58c1-4fb1-aaab-47dd55fe89c2)
+
+
