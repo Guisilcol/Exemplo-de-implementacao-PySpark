@@ -1,7 +1,7 @@
 sudo chmod -R 777 ./
 
 docker run -it \
-    -v DIRETORIO_AWS:/home/glue_user/.aws \
+    -v /home/guilherme/.aws:/home/glue_user/.aws \
     -v ./:/home/glue_user/workspace/ \
     -v AWS_PROFILE=default \
     -e DISABLE_SSL=true --rm \
