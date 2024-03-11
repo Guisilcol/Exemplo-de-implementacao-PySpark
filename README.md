@@ -1,4 +1,4 @@
-# Implementação de Pipelines de Dados com AWS Glue 
+![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/c2c5fb7d-b6f1-43df-b8bd-f948942e1771)# Implementação de Pipelines de Dados com AWS Glue
 
 Este repositório é dedicado à implantação do código fonte disponivel no branch 'convetional-cluster' desse repositório no AWS Glue, preparando desde o ambiente de desenvolvimento até a implantação dos JOB's na AWS. 
 
@@ -144,5 +144,49 @@ if __name__ == "__main__":
 
 10. Com as variáveis de ambiente configuradas, você pode começar a desenvolver os JOB's do Glue.
 
-## Deploy no AWS Glue
-...
+11. Agora criaremos uma ROLE no IAM para possibilitar a execucação dos JOB's. Acesse o IAM via Console da AWS
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/2aef9915-d765-4126-98da-7b681058ee48)
+
+12. No menu lateral, clique em "Roles"
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/8fc4c717-72b7-4be3-9306-6e707ffbc9de)
+
+13. Clique em "Create Role": 
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/613810a6-ea5b-46a3-8a0a-661c71f64013)
+
+14. Siga as seguintes configurações para a criação da Role:
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/7d389668-9dac-4c58-b429-eec48384b503)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/6a0cba6f-2fdb-4ecc-bb1b-8dffb58500c9)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/de1ea84f-90a2-45ae-8294-a1a2c528af2e)
+
+
+
+
+
+
+## Deploy no AWS Glue (manualmente)
+
+Uma vez que o código PySpark foi desenvolvido, poderemos fazer um deploy manual na AWS. O passo-a-passo a seguir mostra como fazer isso, fazendo deploy do job "AWS_GLUE_SPARK_JOB_tbl_cep.py" disponivel nesse repositório em `src/`
+
+1. Acesse o serviço AWS Glue no console da AWS
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/4240d31e-e69e-4d6d-8618-cf38687ec534)
+2. No menu lateral, acesse a aba "ETL Jobs"
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/d58f53af-f58e-44f5-80e8-6fd1c38f8a6f)
+3. Na sessão de "Create job", clique na opção "Script editor" (no print abaixo é a última opção no lado direito)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/edc04165-85cb-43a2-8bcc-70a282b88129)
+4. Será aberta uma caixa de diálogo. Escolha as seguintes configurações (faça upload do seu arquivo .py) e clique em "Create Script":
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/c6ec0a95-8ccd-4d1f-9e0f-40f6b280a2c1)
+5. Renomeie o seu JOB
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/4ab491e6-f1e2-469e-9427-376cbf370648)
+6. Clique a aba "Job Details" e configure de acordo com os prints a seguir:
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/d40deca0-7830-44d2-8e28-4d020b240c37)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/2d1bb4b9-5356-40a1-886d-15dd64e6688b)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/edffdf15-d3ac-41f2-b4f5-e6801d91db98)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/1de6bc89-c6a2-43d5-9819-037939f45c63)
+        - Lembre-se que os parametros --AWS_WAREHOUSE, --SOURCE_PATH e --WORK_PATH estão presentes no arquivo .env. Coloque os mesmos valores do arquivo .env aqui. 
+7. Após fazer todas as configurações, clique em "Save" no canto superior direito da tela.
+
+
+
+
+
+
