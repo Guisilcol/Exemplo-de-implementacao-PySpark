@@ -1,4 +1,4 @@
-![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/c2c5fb7d-b6f1-43df-b8bd-f948942e1771)# Implementação de Pipelines de Dados com AWS Glue
+# Implementação de Pipelines de Dados com AWS Glue
 
 Este repositório é dedicado à implantação do código fonte disponivel no branch 'convetional-cluster' desse repositório no AWS Glue, preparando desde o ambiente de desenvolvimento até a implantação dos JOB's na AWS. 
 
