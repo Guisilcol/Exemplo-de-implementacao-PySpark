@@ -1,27 +1,28 @@
 # Implementação de Pipelines de Dados com AWS Glue
 
-Este repositório é dedicado à implantação do código fonte disponivel no branch 'convetional-cluster' desse repositório no AWS Glue, preparando desde o ambiente de desenvolvimento até a implantação dos JOB's na AWS. 
+Este repositório concentra-se em orientar o usuário na implantação do código-fonte que se encontra no branch 'convetional-cluster' no serviço AWS Glue. O processo abrange desde a configuração inicial do ambiente de desenvolvimento até a efetiva implantação dos jobs no AWS Glue.
 
 ## Pré-requisitos
 
-- Conta na AWS configurada na máquina
-- VS Code 
-    - Extensão 'Dev Container' da Microsoft disponivel na aba 'Extensions' do VS Code
-    - Extensão 'Jupyter' da Microsoft disponivel na aba 'Extensions' do VS Code
-- Docker 
+Para começar, você precisará ter:
+
+- Uma conta AWS já configurada na sua máquina.
+- O Visual Studio Code (VS Code) instalado, junto com as seguintes extensões disponíveis na aba 'Extensões':
+    - 'Dev Container' da Microsoft, para trabalhar com containers de desenvolvimento.
+    - 'Jupyter' da Microsoft, para suporte a notebooks Jupyter.
+- Docker instalado, para criar e gerenciar containers.
 
 ## Estrutura do repositorio
 
 A seguir, uma breve explicação das pastas e arquivos presentes no repositório:
 
-- **data**: Pasta que contém os dados de entrada e saída do pipeline. Os arquivos presentes nessa pasta serão disponibilizados em um Bucket no S3.
-- **db**: Pasta que contém os scripts de criação de tabelas no Glue Data Catalog. Todas as tabelas usadas no projeto são do tipo Iceberg.
-- **sh**: Pasta que contém os scripts shell que auxiliam o desenvolvimento. 
-- **src**: Pasta que contém os códigos fonte do pipeline. Todos os arquivos presentes nessa pasta podem ser considerados individualmente como JOB's do Glue. 
-    - **external_libs**: Pasta que armazena as bibliotecas externas que são utilizadas nos JOB's do Glue. Todos os jobs usam, ao menos, um modúlo presente nessa pasta.
-
-- ***.env.example***: Arquivo que contém as variáveis de ambiente que são utilizadas no projeto. Esse arquivo deve ser copiado para um arquivo .env e preenchido com as informações corretas.
-- ***start_dev_container.bat/start_dev_container.sh***: Script que inicia o ambiente de desenvolvimento subindo um container utilizando Docker. Esse script deve ser executado na raiz do projeto.
+- data: Esta pasta armazena os dados que serão processados pelo pipeline. Ela inclui tanto os dados de entrada quanto os resultados de saída. Esses dados serão posteriormente armazenados em um Bucket no Amazon S3.
+- db: Aqui, você encontra os scripts necessários para criar tabelas no Glue Data Catalog. Importante ressaltar que todas as tabelas criadas para este projeto são do tipo Iceberg, uma estrutura de dados otimizada para grandes conjuntos de dados que possibilitam o uso de operações ACID.
+- sh: Esta pasta contém scripts em Shell que facilitam diversas tarefas de desenvolvimento (como adicionar novas pacotes no Python)
+- src: Dentro desta pasta, estão localizados os códigos-fonte específicos do pipeline. Cada arquivo aqui pode ser tratado como um job individual no AWS Glue.
+- external_libs: Subpasta que guarda as bibliotecas externas necessárias para os jobs do Glue. É garantido que cada job irá requerer pelo menos uma biblioteca encontrada aqui.
+- .env.example: Um arquivo de exemplo que lista todas as variáveis de ambiente necessárias para o projeto. Você deve copiá-lo para um novo arquivo chamado .env e preencher as variáveis com as informações apropriadas.
+- start_dev_container.bat/start_dev_container.sh: Scripts para inicializar o ambiente de desenvolvimento por meio do Docker. Esses scripts devem ser executados na raiz do projeto para subir um container, preparando o ambiente para o desenvolvimento.
 
 ## Preparando o ambiente AWS 
 
