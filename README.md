@@ -126,9 +126,11 @@ if __name__ == "__main__":
 
 ```
 
-8. Certifique-se que está usando a versão do Python 3.10.2 disponivel no container. Execute o código acima utilizando a opção 'Run Below' na primeira célula disponivel. Se tudo estiver configurado corretamente, você verá os resultados do código no terminal Jupyter que automaticamente será aberto. 
+8. Certifique-se que está usando a versão do Python 3.10.2 disponivel no container. Execute o código acima utilizando a opção 'Run Below' na primeira célula disponivel. Se tudo estiver configurado corretamente, você verá os resultados do código no terminal Jupyter que automaticamente será aberto.
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/f725f2de-4a45-47d0-ba64-79d6289ded6e)
 
-9. Com o ambiente de desenvolvimento e AWS configurados, devemos alterar as variáveis de ambiente do projeto. Copie o arquivo `.env.example` para um arquivo chamado `.env` e preencha as variáveis de ambiente com as informações corretas, como segue o exemplo a seguir: 
+
+10. Com o ambiente de desenvolvimento e AWS configurados, devemos alterar as variáveis de ambiente do projeto. Copie o arquivo `.env.example` para um arquivo chamado `.env` e preencha as variáveis de ambiente com as informações corretas, como segue o exemplo a seguir: 
 
     ```
     SOURCE_PATH=s3://repositorio-implementacao-pyspark/input_files
@@ -142,25 +144,21 @@ if __name__ == "__main__":
 
     Caso você não tenha a conta AWS configurada na máquina, você pode obter as credenciais de acesso no console da AWS e preencher as variáveis `AWS_ACCESS_KEY_ID` e `AWS_SECRET_KEY` com as informações corretas.
 
-10. Com as variáveis de ambiente configuradas, você pode começar a desenvolver os JOB's do Glue.
+11. Com as variáveis de ambiente configuradas, você pode começar a desenvolver os JOB's do Glue.
 
-11. Agora criaremos uma ROLE no IAM para possibilitar a execucação dos JOB's. Acesse o IAM via Console da AWS
+12. Agora criaremos uma ROLE no IAM para possibilitar a execucação dos JOB's. Acesse o IAM via Console da AWS
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/2aef9915-d765-4126-98da-7b681058ee48)
 
-12. No menu lateral, clique em "Roles"
+13. No menu lateral, clique em "Roles"
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/8fc4c717-72b7-4be3-9306-6e707ffbc9de)
 
-13. Clique em "Create Role": 
+14. Clique em "Create Role": 
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/613810a6-ea5b-46a3-8a0a-661c71f64013)
 
-14. Siga as seguintes configurações para a criação da Role:
+15. Siga as seguintes configurações para a criação da Role:
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/7d389668-9dac-4c58-b429-eec48384b503)
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/6a0cba6f-2fdb-4ecc-bb1b-8dffb58500c9)
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/de1ea84f-90a2-45ae-8294-a1a2c528af2e)
-
-
-
-
 
 
 ## Deploy no AWS Glue (manualmente)
@@ -184,9 +182,20 @@ Uma vez que o código PySpark foi desenvolvido, poderemos fazer um deploy manual
     - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/1de6bc89-c6a2-43d5-9819-037939f45c63)
         - Lembre-se que os parametros --AWS_WAREHOUSE, --SOURCE_PATH e --WORK_PATH estão presentes no arquivo .env. Coloque os mesmos valores do arquivo .env aqui. 
 7. Após fazer todas as configurações, clique em "Save" no canto superior direito da tela.
-
-
-
+8. Uma vez configurado, certifique-se que todos os arquivos de origem estão disponibilizados no S3. Para testar o JOB, clique me "Run" no canto superior direito da tela. Para acompanhar a sua execução, clique na aba "Runs". Caso o JOB e o ambiente tenham sido configurados da forma correta, o status será "Succeeded" 
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/d998b48d-d561-4b96-9087-5e885c322add)
+9. Abra o serviço "Step Functions" via console da AWS
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/b51d380b-986a-4a21-9f4b-19374bf1868c)
+10. Clique em "Create State Machine" e selecione o template "Blank"
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/34b8294e-ad01-40af-a53e-3d0a79b994dc)
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/ca9ad7b0-2cba-40e3-9a80-a046c8f66932)
+11. Renomeie sua State machine da forma que preferir
+12. Arraste um "Step" disponivel no menu do lado direito chamado "Glue StartJobRun"
+13. Clique no Step e altere o API Parameter, adicionando o nome do JOB criado anteriormente e ativando a opção "Wait for task to complete - optional", conforme imagem abaixo
+    - ![image](https://github.com/Guisilcol/Exemplo-de-implementacao-PySpark/assets/40049979/9844e119-9a1b-43db-ab8f-903d452069da)
+14. Clique em "Create" no canto superior direito
+15. Por fim, clique em "Start execution" e acompanhe a execução do JOB.
+16. O deploy foi concluido com sucesso! Agora você pode fazer o deploy de outros JOBs e orquestra-los via Step Functions.
 
 
 
