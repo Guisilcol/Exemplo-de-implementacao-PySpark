@@ -2,6 +2,12 @@
 
 Esse repositório é uma adaptação da branch 'convetional-cluster', focada na implementação da pipeline de dados com AWS Glue. A ideia central é, além de criar o pipeline, orquestrar os jobs com Step Functions e armazenar os dados no S3, preparar um ambiente de desenvolvimento com Docker e VS Code para que o usuário possa testar e desenvolver os jobs localmente sem custos.
 
+## Tecnologias usadas
+
+Neste ramo do projeto, escolhemos usar exclusivamente os serviços da AWS, com o S3 para armazenar tudo, desde o código até arquivos e dados. Na branch "conventional-cluster", lidamos com operações ACID em tabelas MSSQL, utilizando o comando SQL MERGE, o que não é possível com as tabelas externas padrão no Glue Catalog.
+
+Para contornar isso e manter a consistência entre as branches, optamos pelas tabelas Apache Iceberg. Elas suportam operações ACID e são facilmente gerenciadas pelo Glue Catalog, oferecendo a flexibilidade que precisamos. Finalizamos com a utilização de dois serviços: AWS Glue, aproveitando os Glue Spark Jobs para processar nossos dados e AWS Step Functions para orquestrar nossos JOB's criados.
+
 ## Pré-requisitos
 
 Para começar, você precisará ter:
